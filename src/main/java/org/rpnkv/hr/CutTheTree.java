@@ -1,8 +1,7 @@
 package org.rpnkv.hr;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -10,29 +9,27 @@ import static java.util.stream.Collectors.toList;
 
 class TreeCutter {
 
-    private int[] weights;
-    private final List<List<Integer>> edges;
-    private boolean inсidence[][];
-    private int[][] subtreesWeights;
     private int totalWeight = 0;
+    private Node[] nodes;
+    private int nodesCount = 0;
 
     public TreeCutter(List<Integer> data, List<List<Integer>> edges) {
-        weights = new int[data.size()];
-        this.edges = edges;
+        nodes = new Node[data.size()];
+
         for (int i = 0; i < data.size(); i++) {
-            weights[i] = data.get(i);
-            totalWeight += weights[i];
+            nodes[i] = new Node(data.get(i));
+            totalWeight += nodes[i].weight;
         }
 
-        inсidence = new boolean[data.size()][edges.size()];
-        for (int i = 0; i < edges.size(); i++) {
-            List<Integer> edge = edges.get(i);
-            inсidence[edge.get(0) - 1][i] = true;
-            inсidence[edge.get(1) - 1][i] = true;
-        }
+        for (List<Integer> edge : edges) {
+            int v0 = edge.get(0) - 1, v1 = edge.get(1) - 1;
 
-        subtreesWeights = new int[edges.size()][];
+            nodes[v0].addChild(v1);
+            nodes[v1].addChild(v0);
+        }
     }
+
+
 
     /*
      * Complete the 'cutTheTree' function below.
@@ -45,75 +42,87 @@ class TreeCutter {
 
     public int cutTheTree() {
         cutTrees();
-
+        System.out.println(nodesCount);
         return smallestDiff();
     }
 
     private void cutTrees() {
-        for (int edgeIndex = 0; edgeIndex < inсidence[0].length; edgeIndex++) {
-            if (inсidence[0][edgeIndex]) {
-                int childIndex = getChildIndex(edgeIndex, 0);
-                sum(edgeIndex, childIndex);
-                int edgeSum = subtreesWeights[edgeIndex][0];
-                subtreesWeights[edgeIndex][1] = totalWeight - edgeSum;
+        for (Integer child : nodes[0].children) {
+            nodes[child].removeChild(0);
+            Stack<Integer> stack = new Stack<>();
+            stack.push(child);
+            sum(stack);
+        }
+    }
+
+    private void sum(Stack<Integer> stack) {
+        while (!stack.empty()) {
+            Integer current = stack.peek();
+            if (!nodes[current].children.isEmpty() && !nodes[current].childrenProcessed) {
+                pushChildren(current, stack);
+            } else {
+                stack.pop();
+                Node currentNode = nodes[current];
+                int childrenSum = 0;
+                for (Integer child : currentNode.children) {
+                    childrenSum += nodes[child].weight;
+                }
+                currentNode.weight += childrenSum;
+                nodesCount++;
             }
         }
     }
 
-    private int getChildIndex(int edgeIndex, int parentIndex) {
-        /*for (int i = 0; i < weights.length; i++) {
-            if (inсidence[i][edgeIndex] && i != parentIndex) {
-                return i;
-            }
+    private void pushChildren(Integer current, Stack<Integer> stack) {
+        Node currentNode = nodes[current];
+        for (Integer edge : currentNode.children) {
+            nodes[edge].removeChild(current);
+            stack.push(edge);
         }
-        throw new IllegalArgumentException(String.format("Cannot find second node for edge %d with parent %d",
-                edgeIndex, parentIndex));*/
-        List<Integer> integers = edges.get(edgeIndex);
-        if(integers.get(0) == parentIndex){
-            return integers.get(1);
-        }else {
-            return integers.get(0);
-        }
+        currentNode.childrenProcessed = true;
+
     }
-
-    private void sum(int parentEdgeIndex, int currentIndex) {
-        int childrenWeights = 0;
-        for (int edgeIndex = 0; edgeIndex < inсidence[0].length; edgeIndex++) {
-            if (inсidence[currentIndex][edgeIndex] && edgeIndex != parentEdgeIndex) {
-                int childIndex = getChildIndex(edgeIndex, currentIndex);
-                sum(edgeIndex, childIndex);
-                Integer subtreeWeight = subtreesWeights[edgeIndex][0];
-                subtreesWeights[edgeIndex][1] = totalWeight - subtreeWeight;
-
-
-                childrenWeights += subtreeWeight;
-            }
-        }
-
-        if (subtreesWeights[parentEdgeIndex] != null) {
-            throw new IllegalStateException("Edge " + parentEdgeIndex + " has already been modified");
-        } else {
-            subtreesWeights[parentEdgeIndex] =
-                    new int[]{childrenWeights + weights[currentIndex], 0};
-        }
-    }
-
 
     private int smallestDiff() {
-        int min = Integer.MAX_VALUE;
-        for (int i = 0; i < subtreesWeights.length; i++) {
-            int currentDiff = Math.abs(subtreesWeights[i][0] - subtreesWeights[i][1]);
-            if (currentDiff < min) {
-                min = currentDiff;
+        int min = Integer.MAX_VALUE, otherTreeWeight, currMin = 0;
+        for (int i = 1; i < nodes.length; i++) {
+            otherTreeWeight = totalWeight - nodes[i].weight;
+            currMin = Math.abs(nodes[i].weight - otherTreeWeight);
+            if(currMin < min){
+                min = currMin;
             }
         }
+
         return min;
     }
+
+    private static class Node {
+        private int weight;
+        public boolean childrenProcessed;
+        private Set<Integer> children;
+
+        public Node(int weight) {
+            this.weight = weight;
+            children = new HashSet<>(3);
+        }
+
+        void addChild(Integer index) {
+            boolean add = children.add(index);
+            if (!add) {
+                throw new IllegalStateException("Children already contain edge " + index);
+            }
+        }
+
+        void removeChild(Integer index) {
+            children.remove(index);
+        }
+    }
+
 }
 
 public class CutTheTree {
     public static void main(String[] args) throws IOException {
-        BufferedReader bufferedReader = new BufferedReader(new FileReader("ctt.in"));
+        BufferedReader bufferedReader = new BufferedReader(new FileReader("in"));
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(System.getenv("OUTPUT_PATH")));
 
         int n = Integer.parseInt(bufferedReader.readLine().trim());
@@ -135,20 +144,9 @@ public class CutTheTree {
                 throw new RuntimeException(ex);
             }
         });
-        /*List<Integer> data = Arrays.asList(1, 2, 4, 4, 5, 6, 7, 9);
-        List<List<Integer>> edges = Arrays.asList(
-                Arrays.asList(7, 8),
-                Arrays.asList(1, 7),
-                Arrays.asList(1, 4),
-                Arrays.asList(4, 6),
-                Arrays.asList(4, 5),
-                Arrays.asList(1, 2),
-                Arrays.asList(2, 3)
-        );*/
 
         TreeCutter treeCutter = new TreeCutter(data, edges);
         int diff = treeCutter.cutTheTree();
-        /*System.out.println(diff);*/
 
         bufferedWriter.write(String.valueOf(diff));
         bufferedWriter.newLine();
