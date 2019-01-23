@@ -1,12 +1,7 @@
-package org.rpnkv.hr;
+package org.rpnkv.hr.algorithms;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.junit.jupiter.api.Test;
-
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Scanner;
+import org.rpnkv.hr.algorithms.QueensAttackII;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -1,4 +1,4 @@
-package org.rpnkv.hr;
+package org.rpnkv.hr.algorithms;
 
 import java.lang.reflect.Field;
 
