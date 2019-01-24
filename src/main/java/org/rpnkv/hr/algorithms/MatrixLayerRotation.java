@@ -8,6 +8,7 @@ import java.util.List;
 public class MatrixLayerRotation {
 
     private int r, columns, rows, el;
+    private final int layers;
     private int[][] sourceMatrix, finalMatrix;
 
     public MatrixLayerRotation(int rotations, int length, int height, List<List<Integer>> matrix) {
@@ -17,24 +18,45 @@ public class MatrixLayerRotation {
         sourceMatrix = new int[length][height];
         finalMatrix = new int[length][height];
 
-        for (int i = 0; i < columns; i++) {
-            List<Integer> integers = matrix.get(i);
-            for (int j = 0; j < rows; j++) {
-                sourceMatrix[i][j] = integers.get(j);
+        for (int row = 0; row < rows; row++) {
+            List<Integer> integers = matrix.get(row);
+            for (int column = 0; column < columns; column++) {
+                sourceMatrix[column][rows - 1 - row] = integers.get(column);
             }
         }
+
+        int lessDimension = Math.min(columns, rows);
+        layers = lessDimension / 2;
     }
 
     public void printFinalMatrix() {
-        int lessDimension = Math.min(columns, rows);
-        for (int i = 0; i < lessDimension / 2; i++) {
+        printMatrix(sourceMatrix);
+        System.out.println();
+
+
+        for (int i = 0; i < layers; i++) {
             LayerRevolver layerRevolver = new LayerRevolver(i, r);
             layerRevolver.revolve();
+        }
+
+
+        printMatrix(finalMatrix);
+    }
+
+    private void printMatrix(int[][] finalMatrix) {
+        for (int r = rows - 1; r >= 0; r--) {
+            for (int c = 0; c < columns; c++) {
+                System.out.print(finalMatrix[c][r] + " ");
+            }
+            System.out.println();
         }
     }
 
     class LayerRevolver {
-        private final int layer, rotations, lC, lR;
+        private final int layer;
+        private final int rotations;
+        private int lC;
+        private int lR;
 
         LayerRevolver(int layer, int rotations) {
             this.layer = layer;
@@ -42,81 +64,79 @@ public class MatrixLayerRotation {
             lC = columns - layer * 2;
             lR = rows - layer * 2;
 
-            this.rotations = rotations % (lR + lC);
+            int elementsOnLayer = lR * lC;
+            if (elementsOnLayer != 4) {
+                int tlc = columns - (layer + 1) * 2;
+                int tlr = rows - (layer + 1) * 2;
+                elementsOnLayer -= tlc * tlr;
+            }
+            this.rotations = rotations % elementsOnLayer;
+
+            lC--;
+            lR--;
         }
 
         void revolve() {
-            int r = layer, c;
+            int row = layer, column = layer;
 
-            //revolve lane a
-            for (int i = layer + 1; i < layer + lC; i++) {
-                el = sourceMatrix[i][r];
-                rotateByA(i, rotations);
+            //revolve by lane a
+            for (; column < layer + lC; column++) {
+                el = sourceMatrix[column][row];
+                rotateByA(column - layer, rotations);
             }
 
-            //revolve lane b
-            c = layer + lC - 1;
-            for (int i = layer + 1; i < layer + lR; i++) {
-                el = sourceMatrix[c][i];
-                rotateByB(i, rotations);
+            //revolve by lane b
+            for (; row < layer + lR; row++) {
+                el = sourceMatrix[column][row];
+                rotateByB(row - layer, rotations);
             }
 
-            //revolve lane c
-            r = layer + lR - 1;
-            for (int i = layer + lR - 2; i >= layer; i--) {
-                el = sourceMatrix[i][r];
-                rotateByC(i, rotations);
+            //revolve by lane c
+            for (; column > layer; column--) {
+                el = sourceMatrix[column][row];
+                rotateByC(lC + layer - column, rotations);
             }
 
-            //revolve lane d
-            c = layer;
-            for (int i = layer + lR - 2; i >= layer; i--) {
-                el = sourceMatrix[c][i];
-                rotateByD(i, rotations);
+            //revolve by lane d
+            for (; row > layer; row--) {
+                el = sourceMatrix[column][row];
+                rotateByD(lR + layer - row, rotations);
             }
         }
 
         private void rotateByA(int c, int rotations) {
-            int cF = layer + lC - 1;
-            if (c + rotations > cF) {
-                rotations = rotations - (cF - c) - 1;
-                rotateByB(layer + 1, rotations);
+            if (rotations + c < lC) {
+                finalMatrix[layer + c + rotations][layer] = el;
             } else {
-                cF = c + rotations;
-                finalMatrix[cF][layer] = el;
+                rotations -= lC - c;
+                rotateByB(0, rotations);
             }
         }
 
         private void rotateByB(int r, int rotations) {
-            int rF = layer + lR - 1;
-            if (r + rotations > rF) {
-                rotations = rotations - (rF - r) - 1;
-                rotateByC(layer + lC - 2, rotations);
+            if (rotations + r < lR) {
+                finalMatrix[layer + lC][layer + r + rotations] = el;
             } else {
-                rF = r + rotations;
-                finalMatrix[layer + lC - 1][rF] = el;
+                rotations -= lR - r;
+                rotateByC(0, rotations);
             }
         }
 
         private void rotateByC(int c, int rotations) {
-            int cF = layer;
-            if (c - rotations < cF) {
-                rotations = rotations - (c + 1);
-                rotateByD(layer + lR - 2, rotations);
+            if (rotations + c < lC) {
+                finalMatrix[layer + lC - c - rotations][layer + lR] = el;
             } else {
-                cF = c - rotations;
-                finalMatrix[cF][layer + lR - 1] = el;
+                rotations -= lC - c;
+                rotateByD(0, rotations);
             }
         }
 
         private void rotateByD(int r, int rotations) {
-            int rF = layer;
-            if (r - rotations < layer) {
-                rotations -= r + 1;
-                rotateByA(layer + 1, rotations);
+            if (rotations + r < lR) {
+                finalMatrix[layer][layer + lR - r - rotations] = el;
             } else {
-                rF = r - rotations;
-                finalMatrix[layer][rF] = el;
+                rotations -= lR - r;
+                rotateByA(0, rotations);
             }
         }
     }
