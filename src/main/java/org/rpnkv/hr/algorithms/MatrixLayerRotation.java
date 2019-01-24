@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class MatrixLayerRotation {
 
-    private int r, columns, rows;
+    private int r, columns, rows, el;
     private int[][] sourceMatrix, finalMatrix;
 
     public MatrixLayerRotation(int rotations, int length, int height, List<List<Integer>> matrix) {
@@ -26,21 +26,17 @@ public class MatrixLayerRotation {
     }
 
     public void printFinalMatrix() {
-
         int lessDimension = Math.min(columns, rows);
-        for (int i = 0; i < lessDimension / 2 + 1; i++) {
+        for (int i = 0; i < lessDimension / 2; i++) {
             LayerRevolver layerRevolver = new LayerRevolver(i, r);
             layerRevolver.revolve();
         }
     }
 
-    private void rotateElement(int length, int height, int rotations) {
-    }
-
     class LayerRevolver {
         private final int layer, rotations, lC, lR;
 
-        public LayerRevolver(int layer, int rotations) {
+        LayerRevolver(int layer, int rotations) {
             this.layer = layer;
 
             lC = columns - layer * 2;
@@ -49,69 +45,79 @@ public class MatrixLayerRotation {
             this.rotations = rotations % (lR + lC);
         }
 
-        public void revolve() {
+        void revolve() {
+            int r = layer, c;
 
-        }
-
-        private void revolveElement(int c, int r) {
-            int rotations = this.rotations;
-
-            while (rotations != 0) {//remove
-                if (r == layer && c < layer + lC) {//a
-                    rotations = rotateByA(r, c, rotations);
-                    if (rotations != 0) {//set position to start b
-                        c = layer + lC;
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-                if (c == layer + lC && r < layer + lR) {//b
-                    rotations = rotateByB(r, c, rotations);
-                    if (rotations != 0) {
-                        r = layer + lR;
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-                if (c > layer + 1 && r == layer + lR) {//c
-                    rotations = rotateByC(r, c, rotations);
-                    if (rotations != 0) {
-                        c = layer + lC;
-                        r = layer;
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-                if (c == 1 && r > layer) {//d
-                    rotations = rotateByD(r, c, rotations);
-                    if (rotations != 0) {
-                        throw new IllegalStateException("Too many rotations");
-                    } else {
-                        break;
-                    }
-                }
-                throw new IllegalStateException(c + " " + r);
+            //revolve lane a
+            for (int i = layer + 1; i < layer + lC; i++) {
+                el = sourceMatrix[i][r];
+                rotateByA(i, rotations);
             }
 
+            //revolve lane b
+            c = layer + lC - 1;
+            for (int i = layer + 1; i < layer + lR; i++) {
+                el = sourceMatrix[c][i];
+                rotateByB(i, rotations);
+            }
+
+            //revolve lane c
+            r = layer + lR - 1;
+            for (int i = layer + lR - 2; i >= layer; i--) {
+                el = sourceMatrix[i][r];
+                rotateByC(i, rotations);
+            }
+
+            //revolve lane d
+            c = layer;
+            for (int i = layer + lR - 2; i >= layer; i--) {
+                el = sourceMatrix[c][i];
+                rotateByD(i, rotations);
+            }
         }
 
-        private int rotateByA(int r, int c, int rotations) {
-            return 0;
+        private void rotateByA(int c, int rotations) {
+            int cF = layer + lC - 1;
+            if (c + rotations > cF) {
+                rotations = rotations - (cF - c) - 1;
+                rotateByB(layer + 1, rotations);
+            } else {
+                cF = c + rotations;
+                finalMatrix[cF][layer] = el;
+            }
         }
 
-        private int rotateByB(int r, int c, int rotations) {
-            return 0;
+        private void rotateByB(int r, int rotations) {
+            int rF = layer + lR - 1;
+            if (r + rotations > rF) {
+                rotations = rotations - (rF - r) - 1;
+                rotateByC(layer + lC - 2, rotations);
+            } else {
+                rF = r + rotations;
+                finalMatrix[layer + lC - 1][rF] = el;
+            }
         }
 
-        private int rotateByC(int r, int c, int rotations) {
-            return 0;
+        private void rotateByC(int c, int rotations) {
+            int cF = layer;
+            if (c - rotations < cF) {
+                rotations = rotations - (c + 1);
+                rotateByD(layer + lR - 2, rotations);
+            } else {
+                cF = c - rotations;
+                finalMatrix[cF][layer + lR - 1] = el;
+            }
         }
 
-        private int rotateByD(int r, int c, int rotations) {
-            return 0;
+        private void rotateByD(int r, int rotations) {
+            int rF = layer;
+            if (r - rotations < layer) {
+                rotations -= r + 1;
+                rotateByA(layer + 1, rotations);
+            } else {
+                rF = r - rotations;
+                finalMatrix[layer][rF] = el;
+            }
         }
     }
 
