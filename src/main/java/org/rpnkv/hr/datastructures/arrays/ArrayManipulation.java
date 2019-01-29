@@ -15,7 +15,7 @@ public class ArrayManipulation {
         for (int[] query : queries) {
             query[0] -= 1;
             query[1] -= 1;
-            ranges.appendQuery(new Range(query[0], query[1], query[2]));
+            ranges.appendQuery(query);
         }
 
         return ranges.maxValue;
@@ -33,40 +33,53 @@ public class ArrayManipulation {
             maxValue = range.value;
         }
 
-        void appendQuery(Range appendingRange) {
-            Set<Integer> affectedRanges = getAffectedRanges(appendingRange);
+        void appendQuery(int[] query) {
+            Iterator<Integer> affectedRanges = getAffectedRanges(query[0], query[1]);
 
-            for (Integer affectedRangeBegin : affectedRanges) {
-                Collection<Integer> appendedRanges = appendRange(ranges.get(affectedRangeBegin), appendingRange);
-                affectedRanges.addAll(appendedRanges);
-            }
+            do {
+                Range affectedRange = ranges.get(affectedRanges.next());
+                Range cutBeginRange = RangesCombiner.cutBeginningIfRequired(affectedRange, query[0]);
+                boolean checkWithPreviousRange = false;
+                if (!cutBeginRange.equals(affectedRange)) {
+                    putToRanges(cutBeginRange);
+                } else {
+                    checkWithPreviousRange = true;
+                }
+
+                Range cutEndRange = RangesCombiner.cutEndIfRequired(affectedRange, query[1]);
+                if (!cutEndRange.equals(affectedRange)) {
+                    putToRanges(cutEndRange);
+                }
+
+                affectedRange.value += query[3];
+                if (affectedRange.value > maxValue) {
+                    maxValue = affectedRange.value;
+                }
+
+                if (checkWithPreviousRange) {
+                    int previousRangeIndex = getPreviousRangeIndex(affectedRange);
+                    Range previousRange = ranges.get(previousRangeIndex);
+                    if(previousRange.value == affectedRange.value){
+                        assert(previousRange.end + 1 == affectedRange.begin);
+                        previousRange.end = affectedRange.end;
+                        ranges.remove(affectedRange.begin);
+                    }
+                }
+
+            } while (affectedRanges.hasNext());
         }
 
-        private Set<Integer> getAffectedRanges(Range appendingRange) {
-            Integer rangeStartKey = ranges.floorKey(appendingRange.begin);
-            return ranges.subMap(rangeStartKey, appendingRange.end).keySet();
+        private Iterator<Integer> getAffectedRanges(int begin, int end) {
+            Integer rangeStartKey = ranges.floorKey(begin);
+            return ranges.subMap(rangeStartKey, end).keySet().iterator();
         }
 
-        private Collection<Integer> appendRange(Range affectedRange, Range appendingRange) {
-            if (appendingRange.begin > affectedRange.begin) {
-                return cutRangeBegin(affectedRange, appendingRange);
-            }
-
-            if (appendingRange.end < affectedRange.end) {
-
-            }
-
-
-            return Collections.emptyList();
-        }
-
-        private Collection<Integer> cutRangeBegin(Range affectedRange, Range appendingRange) {
-            Range range = new Range(appendingRange.begin, affectedRange.end,
-                    appendingRange.value + affectedRange.value);
-
-            affectedRange.end = appendingRange.begin - 1;
+        private void putToRanges(Range range) {
             ranges.put(range.begin, range);
-            return Collections.singleton(range.begin);
+        }
+
+        private int getPreviousRangeIndex(Range range) {
+            return ranges.floorKey(range.begin - 1);
         }
     }
 
