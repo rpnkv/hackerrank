@@ -2,6 +2,10 @@ package org.rpnkv.hr.datastructures.arrays;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.util.Scanner;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ArrayManipulationTest {
@@ -42,5 +46,37 @@ class ArrayManipulationTest {
 
         ArrayManipulation am = new ArrayManipulation();
         assertEquals(31, am.arrayManipulation(10, queries));
+    }
+
+    @Test
+    /**
+     * Expected result - 2501448788
+     */
+    void stdin() {
+        Scanner scanner = new Scanner(System.in);
+
+        String[] nm = scanner.nextLine().split(" ");
+
+        int n = Integer.parseInt(nm[0]);
+
+        int m = Integer.parseInt(nm[1]);
+
+        int[][] queries = new int[m][3];
+
+        for (int i = 0; i < m; i++) {
+            String[] queriesRowItems = scanner.nextLine().split(" ");
+            scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
+
+            for (int j = 0; j < 3; j++) {
+                int queriesItem = Integer.parseInt(queriesRowItems[j]);
+                queries[i][j] = queriesItem;
+            }
+        }
+
+        long result = new ArrayManipulation().arrayManipulation(n, queries);
+
+        System.out.println(result);
+
+        scanner.close();
     }
 }

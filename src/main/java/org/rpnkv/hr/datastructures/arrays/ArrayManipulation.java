@@ -1,71 +1,113 @@
 package org.rpnkv.hr.datastructures.arrays;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Objects;
+import org.apache.commons.lang3.NotImplementedException;
+
+import java.util.*;
 
 /**
  * https://www.hackerrank.com/challenges/crush/problem
  */
 public class ArrayManipulation {
 
-    private long[] values;
-
     long arrayManipulation(int n, int[][] queries) {
-        values = new long[n];
-        MaxRanges ranges = new MaxRanges(0, new Range(0, n, 0));
+        RangesArray ranges = new RangesArray(new Range(0, n, 0));
 
-        for (int i = 0; i < queries.length; i++) {
-            Range range = new Range(queries[i][0] - 1, queries[i][1], queries[i][2]);
-            ranges.append(range);
+        for (int[] query : queries) {
+            query[0] -= 1;
+            query[1] -= 1;
+            ranges.appendQuery(new Range(query[0], query[1], query[2]));
         }
 
-        return ranges.currentMaxValue;
+        return ranges.maxValue;
     }
 
-    class MaxRanges {
+    static class RangesArray {
 
-        private long currentMaxValue;
-        private Collection<Range> ranges;
+        private long maxValue;
+        private NavigableMap<Integer, Range> ranges;
 
-        public MaxRanges(long currentMaxValue, Range firstRange) {
-            this.currentMaxValue = currentMaxValue;
-            ranges = new LinkedList<>();
+        RangesArray(Range range) {
+            ranges = new TreeMap<>();
+            ranges.put(range.begin, range);
+
+            maxValue = range.value;
         }
 
-        public void append(Range appendingRange) {
-            Range currentRange = null;//TODO find out why variable isn't initialized until assigned null
+        void appendQuery(Range appendingRange) {
+            Set<Integer> affectedRanges = getAffectedRanges(appendingRange);
 
-            for (int i = appendingRange.begin; i < appendingRange.end; i++) {
-                values[i] += appendingRange.value;
-                if (values[i] > currentMaxValue) {
-                    ranges = new LinkedList<>();
-                    currentRange = new Range(i, i, values[i]);
-                    currentMaxValue = values[i];
-                    continue;
-                }
-                if (values[i] == currentMaxValue) {
-                    if (currentRange == null) {
-                        currentRange = new Range(i, i, values[i]);
-                    }
-                    currentRange.end = i;
-                    continue;
-                }
-                if (values[i] < currentMaxValue) {
-                    if(currentRange != null){
-                        ranges.add(currentRange);
-                        currentRange = null;
-                    }
-                }
+            for (Integer affectedRangeBegin : affectedRanges) {
+                Collection<Integer> appendedRanges = appendRange(ranges.get(affectedRangeBegin), appendingRange);
+                affectedRanges.addAll(appendedRanges);
             }
-            if(currentRange != null){
-                ranges.add(currentRange);
+        }
+
+        private Set<Integer> getAffectedRanges(Range appendingRange) {
+            Integer rangeStartKey = ranges.floorKey(appendingRange.begin);
+            return ranges.subMap(rangeStartKey, appendingRange.end).keySet();
+        }
+
+        private Collection<Integer> appendRange(Range affectedRange, Range appendingRange) {
+            if (appendingRange.begin > affectedRange.begin) {
+                return cutRangeBegin(affectedRange, appendingRange);
+            }
+
+            if (appendingRange.end < affectedRange.end) {
+
+            }
+
+
+            return Collections.emptyList();
+        }
+
+        private Collection<Integer> cutRangeBegin(Range affectedRange, Range appendingRange) {
+            Range range = new Range(appendingRange.begin, affectedRange.end,
+                    appendingRange.value + affectedRange.value);
+
+            affectedRange.end = appendingRange.begin - 1;
+            ranges.put(range.begin, range);
+            return Collections.singleton(range.begin);
+        }
+    }
+
+    static class RangesCombiner {
+
+        /**
+         * Cuts processing range by the beginning of added range if the beginning of added range is behind the beginning
+         * if processed range. Processing range end begins at added range start - 1.
+         *
+         * @param processingRange
+         * @param bound
+         * @return range to append added range value.
+         */
+        static Range cutBeginningIfRequired(Range processingRange, int bound) {
+            if (processingRange.startsBefore(bound)) {
+                return processingRange.splitByBeginning(bound);
+            } else {
+                return processingRange;
+            }
+        }
+
+        /**
+         * When add range ends before processing end range - processing range must be split to 2 separate ranges. Processing
+         * range must end at the same place that appending range ends. Derived range must start right next to processing
+         * range's new end and end at processing range's old end.
+         *
+         * @param processingRange
+         * @param bound
+         * @return
+         */
+        static Range cutEndIfRequired(Range processingRange, int bound) {
+            if (processingRange.endsBefore(bound)) {
+                return processingRange.splitByEnding(bound);
+            } else {
+                return processingRange;
             }
         }
     }
 
-    class Range {
-        private final long value;
+    static class Range implements Comparable<Range> {
+        private long value;
 
         private final int begin;
         private int end;
@@ -90,6 +132,27 @@ public class ArrayManipulation {
         @Override
         public int hashCode() {
             return Objects.hash(value, begin, end);
+        }
+
+        @Override
+        public int compareTo(Range o) {
+            return this.begin - o.begin;
+        }
+
+        boolean startsBefore(int begin) {
+            throw new NotImplementedException("");
+        }
+
+        Range splitByBeginning(int newBeginning) {
+            throw new NotImplementedException("");
+        }
+
+        boolean endsBefore(int end) {
+            throw new NotImplementedException("");
+        }
+
+        Range splitByEnding(int newEnding) {
+            throw new NotImplementedException("");
         }
     }
 
