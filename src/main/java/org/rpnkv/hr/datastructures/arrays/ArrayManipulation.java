@@ -1,8 +1,9 @@
 package org.rpnkv.hr.datastructures.arrays;
 
-import org.apache.commons.lang3.NotImplementedException;
-
-import java.util.*;
+import java.util.Iterator;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * https://www.hackerrank.com/challenges/crush/problem
@@ -51,18 +52,20 @@ public class ArrayManipulation {
                     putToRanges(cutEndRange);
                 }
 
-                affectedRange.value += query[3];
+                affectedRange.value += query[2];
                 if (affectedRange.value > maxValue) {
                     maxValue = affectedRange.value;
                 }
 
-                if (checkWithPreviousRange) {
+                if (checkWithPreviousRange && !(ranges.firstKey() == 0)) {
                     int previousRangeIndex = getPreviousRangeIndex(affectedRange);
-                    Range previousRange = ranges.get(previousRangeIndex);
-                    if(previousRange.value == affectedRange.value){
-                        assert(previousRange.end + 1 == affectedRange.begin);
-                        previousRange.end = affectedRange.end;
-                        ranges.remove(affectedRange.begin);
+                    if (ranges.containsKey(previousRangeIndex)) {
+                        Range previousRange = ranges.get(previousRangeIndex);
+                        if (previousRange.value == affectedRange.value) {
+                            assert (previousRange.end + 1 == affectedRange.begin);
+                            previousRange.end = affectedRange.end;
+                            ranges.remove(affectedRange.begin);
+                        }
                     }
                 }
 
@@ -122,7 +125,7 @@ public class ArrayManipulation {
     static class Range implements Comparable<Range> {
         private long value;
 
-        private final int begin;
+        private int begin;
         private int end;
 
         public Range(int begin, int end, long value) {
@@ -153,19 +156,23 @@ public class ArrayManipulation {
         }
 
         boolean startsBefore(int begin) {
-            throw new NotImplementedException("");
+            return begin < this.begin;
         }
 
         Range splitByBeginning(int newBeginning) {
-            throw new NotImplementedException("");
+            Range newRange = new Range(begin, newBeginning - 1, value);
+            begin = newBeginning;
+            return newRange;
         }
 
         boolean endsBefore(int end) {
-            throw new NotImplementedException("");
+            return end < this.end;
         }
 
         Range splitByEnding(int newEnding) {
-            throw new NotImplementedException("");
+            Range newRange = new Range(newEnding + 1, end, value);
+            end = newEnding;
+            return newRange;
         }
     }
 
