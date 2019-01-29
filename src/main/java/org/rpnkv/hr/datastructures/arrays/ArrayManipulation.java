@@ -1,9 +1,6 @@
 package org.rpnkv.hr.datastructures.arrays;
 
-import java.util.Iterator;
-import java.util.NavigableMap;
-import java.util.Objects;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * https://www.hackerrank.com/challenges/crush/problem
@@ -13,11 +10,12 @@ public class ArrayManipulation {
     long arrayManipulation(int n, int[][] queries) {
         RangesArray ranges = new RangesArray(new Range(0, n, 0));
 
-        for (int[] query : queries) {
-            query[0] -= 1;
-            query[1] -= 1;
-            ranges.appendQuery(query);
+        for (int i = 0; i < queries.length; i++) {
+            queries[i][0] -= 1;
+            queries[i][1] -= 1;
+            ranges.appendQuery(queries[i]);
         }
+
 
         return ranges.maxValue;
     }
@@ -35,14 +33,17 @@ public class ArrayManipulation {
         }
 
         void appendQuery(int[] query) {
-            Iterator<Integer> affectedRanges = getAffectedRanges(query[0], query[1]);
+            Set<Integer> affectedRangesSet = getAffectedRanges(query[0], query[1]);
+            Iterator<Integer> affectedRangesIterator = affectedRangesSet.iterator();
+
 
             do {
-                Range affectedRange = ranges.get(affectedRanges.next());
+                Range affectedRange = ranges.get(affectedRangesIterator.next());
                 Range cutBeginRange = RangesCombiner.cutBeginningIfRequired(affectedRange, query[0]);
                 boolean checkWithPreviousRange = false;
                 if (!cutBeginRange.equals(affectedRange)) {
                     putToRanges(cutBeginRange);
+                    putToRanges(affectedRange);
                 } else {
                     checkWithPreviousRange = true;
                 }
@@ -69,12 +70,12 @@ public class ArrayManipulation {
                     }
                 }
 
-            } while (affectedRanges.hasNext());
+            } while (affectedRangesIterator.hasNext());
         }
 
-        private Iterator<Integer> getAffectedRanges(int begin, int end) {
+        private Set<Integer> getAffectedRanges(int begin, int end) {
             Integer rangeStartKey = ranges.floorKey(begin);
-            return ranges.subMap(rangeStartKey, end).keySet().iterator();
+            return ranges.subMap(rangeStartKey, end + 1).keySet();
         }
 
         private void putToRanges(Range range) {
@@ -123,10 +124,9 @@ public class ArrayManipulation {
     }
 
     static class Range implements Comparable<Range> {
-        private long value;
+        int begin, end;
 
-        private int begin;
-        private int end;
+        private long value;
 
         public Range(int begin, int end, long value) {
 
@@ -155,8 +155,17 @@ public class ArrayManipulation {
             return this.begin - o.begin;
         }
 
+        @Override
+        public String toString() {
+            return "Range{" +
+                    "begin=" + begin +
+                    ", end=" + end +
+                    ", value=" + value +
+                    '}';
+        }
+
         boolean startsBefore(int begin) {
-            return begin < this.begin;
+            return this.begin < begin;
         }
 
         Range splitByBeginning(int newBeginning) {

@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ArrayManipulationTest {
 
     @Test
-    void testCase0() {
+    void sampleTestCase0() {
         int[][] queries = new int[3][3];
         queries[0] = new int[]{1, 2, 100};
         queries[1] = new int[]{2, 5, 100};
@@ -24,7 +24,7 @@ class ArrayManipulationTest {
     }
 
     @Test
-    void testCase1() {
+    void sampleTestCase1() {
         int[][] queries = new int[][]{
                 {1, 5, 3},
                 {4, 8, 7},
@@ -46,6 +46,17 @@ class ArrayManipulationTest {
 
         ArrayManipulation am = new ArrayManipulation();
         assertEquals(31, am.arrayManipulation(10, queries));
+    }
+
+    @Test
+    void finalTestCase0() {
+        int[][] queries = new int[][]{
+                {2, 3, 603},
+                {1, 1, 286},
+                {4, 4, 882}
+        };
+        ArrayManipulation am = new ArrayManipulation();
+        assertEquals(882, am.arrayManipulation(4, queries));
     }
 
     @Test
