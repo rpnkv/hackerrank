@@ -1,5 +1,7 @@
 package org.rpnkv.hr.datastructures.arrays;
 
+import jdk.nashorn.internal.ir.annotations.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedWriter;
@@ -60,6 +62,7 @@ class ArrayManipulationTest {
     }
 
     @Test
+    @Disabled
     /**
      * Expected result - 2501448788
      */

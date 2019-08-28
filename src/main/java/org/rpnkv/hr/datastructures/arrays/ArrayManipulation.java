@@ -33,7 +33,7 @@ public class ArrayManipulation {
         }
 
         void appendQuery(int[] query) {
-            Set<Integer> affectedRangesSet = getAffectedRanges(query[0], query[1]);
+            Set<Integer> affectedRangesSet = new TreeSet<>(getAffectedRanges(query[0], query[1]));
             Iterator<Integer> affectedRangesIterator = affectedRangesSet.iterator();
 
 
