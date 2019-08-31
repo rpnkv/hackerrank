@@ -1,38 +1,32 @@
 package org.rpnkv.hr.ivprep.alg;
 
-import sun.security.util.ArrayUtil;
-
-import java.io.*;
-import java.math.*;
-import java.security.*;
-import java.text.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.regex.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Scanner;
 
 public class ArrayRotation {
 
     // Complete the rotLeft function below.
     static int[] rotLeft(int[] a, int d) {
         final int rotations = d % a.length;
-        for (int i = 0; i < a.length; i++) {
+        int[] rotatedArray = new int[a.length];
+        for (int i = 1; i <= a.length; i++) {
             int i1;
-            if(rotations > (i + 1)){
-                int rotations1 = rotations - (i + 1);
+            if (rotations >= i) {
+                int rotations1 = rotations - i;
                 i1 = a.length - rotations1;
-            }else{
-                i1 = i - (rotations + 1);
+            } else {
+                i1 = i - rotations;
             }
 
-            replace(a, i, i1);
+            rotatedArray[i1 - 1] = i - 1;
         }
-        return a;
-    }
+        for (int i = 0; i < rotatedArray.length; i++) {
+            rotatedArray[i] = a[rotatedArray[i]];
+        }
 
-    static void replace(int[] a, int x, int y){
-        int buffer = a[x];
-        a[x] = a[y];
-        a[y] = buffer;
+        return rotatedArray;
     }
 
     private static final Scanner scanner = new Scanner(System.in);
